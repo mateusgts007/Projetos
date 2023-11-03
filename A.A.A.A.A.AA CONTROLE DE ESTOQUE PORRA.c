@@ -28,19 +28,255 @@ typedef struct  {
 
 } estoque;
 
-void (){
+
+void inclusaoProduto(estoque produto){ //// inicio da função de incluir produtos
+
+
+    FILE *arquivo = fopen("estoque.txt","a");
+
+    if(arquivo == NULL){
+
+        printf("Erro ao abrir o arquivo para escrita.\n");
+        return;
+    }
+
+do{
+
+
+   printf("Nome do Produto: ");
+   fflush(stdin);
+   fgets(produto.nomeProduto, sizeof(produto.nomeProduto),stdin);
+
+   printf("Preco: ");
+   scanf("%f",&produto.preco);
+
+   if(produto.preco <= 0){
+
+    printf("O preco do produto deve ser superior a 0\n");
+
+    fclose(arquivo);
+
+    return;
+
+   } else{ //// comeco do else
+
+
+   printf("Unidade(Quilo/Grama): ");
+   fflush(stdin);
+   fgets(produto.unidade, sizeof(produto.unidade),stdin);
+
+    printf("Quantidade em Estoque: ");
+    scanf("%d",&produto.quantidade_estoque);
+
+    printf("Confirmar Inclusao (1-Sim/0-Nao)");
+    scanf("%d",&produto.confirmarInclusao);
+
+   } /// fim do else 
+
+    if(produto.confirmarInclusao == 1){
+
+    fwrite(&produto, sizeof(estoque), 1, arquivo);
+
+    } else {
+
+        printf("inclusao cancelada\n");
+    }
+
+    printf("Nova Inclusao (1-Sim/0-Nao)");
+    scanf("%d",&produto.novaInclusao);
 
 
 
+} while(produto.novaInclusao == 1);
 
-    
+
+fclose(arquivo); ////// fechando o arquivo
+
+
+} //*************// fim da função de incluir dados //****************//
+
+
+
+int alteracaoProduto(const char *nomeProduto, float novoPreco, int novaQuantidade, const char novaUnidade){ // inicio da função alteração produtos //
+
+    FILE *arquivo = fopen("estoque.txt", "r+"); ///// r+ para ler e escrever no arquivo
+
+    if(arquivo == NULL){
+
+        printf("Erro ao abrir o arquivo para alteracao\n");
+
+        return 0;
+    }
+
+    char linha [1000];
+    char tempFile[] = "temp.txt"; //// arquivo temporario para alterar os produtos
+
+    FILE *temp = fopen(tempFile, "w");
+
+    if(temp == NULL){
+
+        printf("Erro ao criar arquivo temporario\n");
+
+        return 0;
+    }
+
+    int produtoEncontrado = 0;
+
+    while (fgets(linha, sizeof(linha), arquivo)){
+
+        char produtoAtual[50];
+        float precoAtual;
+        char unidadeAtual[10];
+        int quantidadeAtual;
+        int confirmarInclusao;
+        int novaInclusao;
+
+        if(sscanf(linha, "%49s;%f;%9s;%d;%d;%d",produtoAtual, &precoAtual, unidadeAtual, &quantidadeAtual, &confirmarInclusao, &novaInclusao) != 6){
+
+        fprintf(temp, "%s",linha);
+        continue; 
+        }
+
+        if(strcmp(produtoAtual, nomeProduto) == 0){ /// comparou os nomes 
+
+            produtoEncontrado = 1;
+            precoAtual = novoPreco;
+            quantidadeAtual = novaQuantidade;
+            strcpy(unidadeAtual, novaUnidade);
+
+        }
+
+        fprintf(temp, "%s;%.2f;%s;%d;%d;%d\n",produtoAtual, precoAtual, unidadeAtual, quantidadeAtual, confirmarInclusao, novaInclusao);
+
+    } //// fim do while
+
+        fclose(arquivo);
+        fclose(temp);
+        remove("estoque.txt");
+        rename(tempFile, "estoque.txt");
+
+    if (!produtoEncontrado) {
+
+        printf("Produto nao encontrado.\n");
+
+        return 0; // Retorna 0 para erro
+    } else {
+
+        printf("Produto alterado com sucesso.\n");
+
+        return 1; // Retorne 1 para sucesso
+    }
+
+
+} // ********* fim da função alteração produtos // ******* //
+
+
+
+int consultaProdutoPorNome(const char *nome, estoque *produtoEncontrado){ //// inicio da função para consultar produtos
+
+    FILE *arquivo = fopen("estoque.txt", "rb");
+
+    if(arquivo == NULL){
+
+        printf("Erro ao abrir o arquivo\n");
+        return 0;
+    }
+
+    int encontrado = 0; //// variavel para contar se o item foi encontrado
+
+
+    while (fread(produtoEncontrado, sizeof(estoque), 1, arquivo) == 1){ //// inicio do while
+
+    if(strcmp(produtoEncontrado->nomeProduto, nome) == 0){
+
+        encontrado = 1;
+
+        printf("Produto encontrado:\n");
+        printf("Nome: %s\n",produtoEncontrado->nomeProduto);
+        printf("preco: %.2f\n",produtoEncontrado->preco);
+        printf("Unidade: %s\n",produtoEncontrado->unidade);
+        printf("Quantidade em Estoque: %d\n",produtoEncontrado->quantidade_estoque);
+        printf("Nova Consulta (1-Sim/0-Nao): ");
+        scanf("%d",&produtoEncontrado->novaConsulta);
+
+        
+    }
+
+} /// fim do while
+
+fclose(arquivo); //// fechando o arquivo
+
+if(!encontrado){
+
+    printf("Produto nao encontrado\n");
+
+    return 0; //// erro
+
+} else {
+
+    return 1; //// encontrado
 }
+
+
+} //// fim da função para consultar produtos
+
+void excluirProduto(const char *nomeProduto) { ////////////// inicio da função de excluir
+    FILE *arquivo = fopen("estoque.txt", "r");
+    FILE *temp = fopen("temp.txt", "w");
+
+    if (arquivo == NULL || temp == NULL) {
+        printf("Erro ao abrir arquivos para exclusao\n");
+        return; // Encerra a função em caso de erro
+    }
+
+    char linha[1000];
+
+    while (fgets(linha, sizeof(linha), arquivo)) {
+        char produtoAtual[50];
+        float precoAtual;
+        char unidadeAtual[10];
+        int quantidadeAtual;
+        int confirmarInclusao;
+        int novaInclusao;
+
+        if (sscanf(linha, "%49s;%f;%9s;%d;%d;%d", produtoAtual, &precoAtual, unidadeAtual, &quantidadeAtual, &confirmarInclusao, &novaInclusao) != 6) {
+
+            fprintf(temp, "%s", linha);
+
+            continue;
+
+        }
+
+        if (strcmp(produtoAtual, nomeProduto) != 0) {
+
+            fprintf(temp, "%s;%.2f;%s;%d;%d;%d\n", produtoAtual, precoAtual, unidadeAtual, quantidadeAtual, confirmarInclusao, novaInclusao);
+
+        } else {
+            // O produto deve ser excluído, não escreva no arquivo temporário
+        }
+    }
+
+    fclose(arquivo);
+    fclose(temp);
+
+    remove("estoque.txt");
+    rename("temp.txt", "estoque.txt");
+
+    printf("Produto excluido com sucesso.\n");
+
+} ////////////////////////// fim da função de excluir produtos
+
+
 
 int main (){ //// função principal main
 
 
 int opcao0,opcao1; ////varivael para acessar telas do switch
 int opcaoMovimentacao; //// variavel para acessar telas do switch
+
+char nomePesquisado[50]; //// consulta
+estoque produtoEncontrado;
+
 
 
 do{ //// inicio do do while
@@ -96,6 +332,11 @@ printf("\n");
 printf("\t\tINCLUSAO DE PRODUTO\n");
 printf("\n");
 
+estoque novoProduto; /// criando uma nova variavel do tipo estoque para armazenar os novos produtos
+
+inclusaoProduto(novoProduto); /// chamando a função de incluir produtos
+
+
 break;
 
 
@@ -108,6 +349,37 @@ printf("\t\tSISTEMA DE CONTROLE DE ESTOQUE\n");
 printf("\n");
 printf("\t\tALTERACAO DE PRODUTO\n");
 printf("\n");
+
+char nomeProduto[50];
+float novoPreco;
+int novaQuantidade;
+char novaUnidade[10];
+
+
+    printf("Nome do Produto a ser alterado: ");
+    fflush(stdin);
+    fgets(nomeProduto, sizeof(nomeProduto), stdin);
+
+    printf("Novo Preco: ");
+    scanf("%f", &novoPreco);
+
+    printf("Nova Quantidade: ");
+    scanf("%d", &novaQuantidade);
+    
+
+    printf("Nova Unidade(Quilo/Grama): ");
+    fflush(stdin);
+    fgets(novaUnidade, sizeof(novaUnidade), stdin);
+
+    
+    int resultado = alteracaoProduto(nomeProduto, novoPreco, novaQuantidade, novaUnidade);
+
+
+    if (resultado == 1) {
+        printf("Produto alterado com sucesso.\n");
+    } else {
+        printf("Produto nao encontrado ou ocorreu um erro na alteracao.\n");
+    }
 
 
 
@@ -122,6 +394,32 @@ printf("\n");
 printf("\t\tCONSULTA DE PRODUTO\n");
 printf("\n");
 
+do{
+
+printf("Nome do produto para para consulta no Estoque: ");
+fflush(stdin);
+fgets(nomePesquisado, sizeof(nomePesquisado), stdin);
+
+if(consultaProdutoPorNome(nomePesquisado, &produtoEncontrado)){
+
+    printf("Produto encontrado:\n");
+    printf("Nome: %s\n",produtoEncontrado.nomeProduto);
+    printf("preco: %.2f\n",produtoEncontrado.preco);
+    printf("Unidade: %s\n",produtoEncontrado.unidade);
+    printf("Quantidade em Estoque: %d\n",produtoEncontrado.quantidade_estoque);
+    
+    printf("Nova Consulta (1-Sim/0-Nao): ");
+
+    scanf("%d",&produtoEncontrado.novaConsulta);
+
+} else {
+
+    printf("Produto nao encontrado\n");
+
+    produtoEncontrado.novaConsulta = 0;
+}
+
+} while(produtoEncontrado.novaConsulta == 1);
 
 break;
 
@@ -135,6 +433,11 @@ printf("\n");
 printf("\t\tEXCLUSAO\n");
 printf("\n");
 
+printf("Nome do Produto a ser excluido: ");
+    fflush(stdin);
+    fgets(nomePesquisado, sizeof(nomePesquisado), stdin);
+
+    excluirProduto(nomePesquisado);
 
 
 break;
